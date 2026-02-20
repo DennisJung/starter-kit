@@ -1,5 +1,7 @@
 """SMA 크로스 전략 백테스팅 라우터"""
 
+from datetime import timedelta
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import yfinance as yf
@@ -53,11 +55,17 @@ class BacktestResponse(BaseModel):
 def run_sma_backtest(req: BacktestRequest):
     """SMA 골든크로스/데드크로스 전략 백테스팅"""
 
-    # Yahoo Finance 데이터 조회
+    # SMA 워밍업을 위해 요청 기간보다 130 캘린더일 앞 데이터를 추가 조회
+    # (90 거래일 ≈ 130 캘린더일 여유 → SMA-60 워밍업 후에도 충분한 분석 구간 확보)
+    extended_start = (
+        pd.Timestamp(req.from_date) - timedelta(days=130)
+    ).strftime("%Y-%m-%d")
+
+    # Yahoo Finance 데이터 조회 (워밍업 포함 확장 기간)
     try:
         df = yf.download(
             req.ticker,
-            start=req.from_date,
+            start=extended_start,
             end=req.to_date,
             progress=False,
             auto_adjust=True,
@@ -76,7 +84,7 @@ def run_sma_backtest(req: BacktestRequest):
     if isinstance(raw_close, pd.DataFrame):
         raw_close = raw_close.iloc[:, 0]
 
-    # 깔끔한 단일 DataFrame으로 재구성
+    # 확장 데이터 전체로 SMA 계산 (워밍업 포함)
     work = pd.DataFrame(index=raw_close.index)
     work["close"] = raw_close.values
     work["sma_short"] = work["close"].rolling(SMA_SHORT).mean()
@@ -85,14 +93,35 @@ def run_sma_backtest(req: BacktestRequest):
     # NaN 제거 (SMA 워밍업 기간)
     work = work.dropna(subset=["sma_short", "sma_long"])
 
-    # 크로스 신호 감지
+    # 크로스 신호는 확장 데이터 전체로 계산 (from_date 시점 포지션 정확도 확보)
     work["position"] = (work["sma_short"] > work["sma_long"]).astype(int)
     work["signal"] = work["position"].diff()
 
-    # 포지션 시뮬레이션
+    # from_date 직전 포지션 상태 확인 → 초기 진입 여부 결정
+    from_ts = pd.Timestamp(req.from_date)
+    prior = work[work.index < from_ts]
+    initial_position = int(prior.iloc[-1]["position"]) if not prior.empty else 0
+
+    # 실제 분석 결과는 from_date 이후 데이터만 사용
+    work = work[work.index >= from_ts].copy()
+
+    if work.empty:
+        raise HTTPException(
+            status_code=400,
+            detail=f"{req.from_date} 이후 유효한 데이터가 없습니다."
+        )
+
+    # 포지션 시뮬레이션 (초기 포지션 반영)
     capital = float(INITIAL_CAPITAL)
     holding = 0.0           # 보유 주수
     entry_price = 0.0       # 매수 단가
+
+    # from_date 이전에 이미 매수 포지션이면 첫날 가격으로 진입 처리
+    if initial_position == 1:
+        first_price = float(work.iloc[0]["close"])
+        holding = capital / first_price
+        entry_price = first_price
+        capital = 0.0
 
     signals: list[Signal] = []
     equity_curve: list[EquityPoint] = []
@@ -131,6 +160,7 @@ def run_sma_backtest(req: BacktestRequest):
         capital = holding * last_price
         trade_return = (last_price - entry_price) / entry_price
         trades.append({"return": trade_return})
+        holding = 0.0  # double-counting 방지
 
     # ─── 성과 지표 계산 ───────────────────────────────────────────────────────
 

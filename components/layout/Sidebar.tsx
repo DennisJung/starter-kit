@@ -5,7 +5,7 @@ import type { NavItem } from "@/lib/types";
 
 const NAV_ITEMS: NavItem[] = [
   { label: "데모 차트", href: "/demo", icon: BarChart3 },
-  { label: "백테스트", href: "/backtest", icon: TrendingUp, badge: "Soon" },
+  { label: "백테스트", href: "/backtest", icon: TrendingUp },
 ];
 
 /** 사이드바 내부 콘텐츠 (Sheet 모바일 버전에서도 재사용) */
