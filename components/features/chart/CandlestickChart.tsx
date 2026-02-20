@@ -7,16 +7,18 @@ import {
   CrosshairMode,
   CandlestickSeries,
   HistogramSeries,
+  createSeriesMarkers,
 } from "lightweight-charts";
-import type { OHLCVData } from "@/lib/types";
+import type { OHLCVData, BacktestSignal } from "@/lib/types";
 import { useTheme } from "@/hooks/useTheme";
 
 interface CandlestickChartProps {
   data: OHLCVData[];
   height?: number;
+  signals?: BacktestSignal[];  // 매매 신호 마커 (백테스트용)
 }
 
-export function CandlestickChart({ data, height = 420 }: CandlestickChartProps) {
+export function CandlestickChart({ data, height = 420, signals }: CandlestickChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
 
@@ -73,6 +75,19 @@ export function CandlestickChart({ data, height = 420 }: CandlestickChartProps) 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     candleSeries.setData(candleData as any);
 
+    // 매매 신호 마커 (백테스트 결과) - v5 API: createSeriesMarkers
+    if (signals && signals.length > 0) {
+      const markers = signals.map((s) => ({
+        time: s.date,
+        position: s.type === "buy" ? "belowBar" : "aboveBar",
+        color: s.type === "buy" ? "#22c55e" : "#ef4444",
+        shape: s.type === "buy" ? "arrowUp" : "arrowDown",
+        text: s.type === "buy" ? "매수" : "매도",
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createSeriesMarkers(candleSeries, markers as any);
+    }
+
     // 거래량 히스토그램 (v5 API)
     const volumeSeries = chart.addSeries(HistogramSeries, {
       color: "#3b82f640",
@@ -105,7 +120,7 @@ export function CandlestickChart({ data, height = 420 }: CandlestickChartProps) 
       resizeObserver.disconnect();
       chart.remove();
     };
-  }, [data, height, theme]);
+  }, [data, height, theme, signals]);
 
   return <div ref={containerRef} className="w-full rounded-md overflow-hidden" />;
 }
