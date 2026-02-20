@@ -9,7 +9,7 @@ Next.js 16 App Router + TradingView 경량 차트 + shadcn/ui 프론트엔드와
 
 | 데모 차트 페이지 | 백테스트 페이지 |
 |:-:|:-:|
-| AAPL, SPY, SCHD 캔들스틱 차트 + 거래량 | SMA 20/60 크로스 전략 · 성과 지표 · 수익률 곡선 |
+| ![데모 차트](public/screenshots/demo.png) | ![백테스트](public/screenshots/backtest.png) |
 
 ---
 
@@ -323,7 +323,6 @@ uvicorn main:app --port 8000            # 프로덕션 서버
 | Phase | 상태 | 내용 |
 |-------|------|------|
 | Phase 1 | ✅ 완료 | Yahoo Finance 연동, 캔들스틱 차트, 반응형 레이아웃 |
-| Phase 2 | ✅ 완료 | FastAPI 백엔드 + SMA 크로스 백테스팅 엔진 + 성과 지표 |
 | Phase 3 | 📋 계획 | 전략 파라미터 튜닝 UI, 복수 전략 비교, 리포트 내보내기 |
 
 ---
