@@ -1,7 +1,7 @@
 // ─── 공유 타입 정의 ────────────────────────────────────────────────────────────
 
 /** 지원하는 종목 티커 */
-export type Ticker = "AAPL" | "SPY" | "SCHD";
+export type Ticker = "AAPL" | "QQQ" | "SPY" | "SCHD";
 
 /** OHLCV 데이터 (TradingView Lightweight Charts 호환 형식) */
 export interface OHLCVData {

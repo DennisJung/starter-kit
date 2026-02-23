@@ -3,6 +3,7 @@ import type { Ticker, ChartPeriod, BacktestPeriod } from "./types";
 /** 지원 종목 목록 */
 export const TICKERS: { value: Ticker; label: string; description: string }[] = [
   { value: "AAPL", label: "AAPL", description: "Apple Inc." },
+  { value: "QQQ", label: "QQQ", description: "나스닥 100 ETF" },
   { value: "SPY", label: "SPY", description: "S&P 500 ETF" },
   { value: "SCHD", label: "SCHD", description: "Schwab Dividend ETF" },
 ];
