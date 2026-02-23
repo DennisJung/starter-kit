@@ -164,7 +164,7 @@ def run_sma_backtest(req: BacktestRequest):
 
     # ─── 성과 지표 계산 ───────────────────────────────────────────────────────
 
-    final_value = capital + holding * float(work.iloc[-1]["close"])
+    final_value = capital  # holding은 167줄 이전에 이미 0.0으로 청산됨
     total_return = (final_value - INITIAL_CAPITAL) / INITIAL_CAPITAL
 
     # 샤프지수 (일간 수익률 기준, 무위험 수익률 0 가정)
