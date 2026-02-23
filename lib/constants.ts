@@ -40,5 +40,5 @@ export const BACKTEST_PERIODS: { value: BacktestPeriod; label: string; days: num
 /** 기본 백테스트 기간 */
 export const DEFAULT_BACKTEST_PERIOD: BacktestPeriod = "1Y";
 
-/** FastAPI 백엔드 URL */
-export const FASTAPI_BASE_URL = "http://localhost:8000";
+/** FastAPI 백엔드 URL (환경변수 우선, 로컬 개발 폴백) */
+export const FASTAPI_BASE_URL = process.env.FASTAPI_BASE_URL ?? "http://localhost:8000";

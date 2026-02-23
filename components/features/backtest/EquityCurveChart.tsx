@@ -6,6 +6,8 @@ import {
   ColorType,
   CrosshairMode,
   LineSeries,
+  type LineData,
+  type Time,
 } from "lightweight-charts";
 import type { EquityPoint } from "@/lib/types";
 import { useTheme } from "@/hooks/useTheme";
@@ -58,8 +60,7 @@ export function EquityCurveChart({ data, height = 240 }: EquityCurveChartProps) 
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lineSeries.setData(data as any);
+    lineSeries.setData(data as LineData<Time>[]);
     chart.timeScale().fitContent();
 
     // 반응형 리사이즈

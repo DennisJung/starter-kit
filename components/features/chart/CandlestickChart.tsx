@@ -8,6 +8,10 @@ import {
   CandlestickSeries,
   HistogramSeries,
   createSeriesMarkers,
+  type CandlestickData,
+  type HistogramData,
+  type SeriesMarker,
+  type Time,
 } from "lightweight-charts";
 import type { OHLCVData, BacktestSignal } from "@/lib/types";
 import { useTheme } from "@/hooks/useTheme";
@@ -66,26 +70,24 @@ export function CandlestickChart({ data, height = 420, signals }: CandlestickCha
 
     // OHLCVData → Lightweight Charts 형식으로 변환
     const candleData = data.map(({ time, open, high, low, close }) => ({
-      time,
+      time: time as Time,
       open,
       high,
       low,
       close,
     }));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    candleSeries.setData(candleData as any);
+    candleSeries.setData(candleData as CandlestickData<Time>[]);
 
     // 매매 신호 마커 (백테스트 결과) - v5 API: createSeriesMarkers
     if (signals && signals.length > 0) {
-      const markers = signals.map((s) => ({
-        time: s.date,
-        position: s.type === "buy" ? "belowBar" : "aboveBar",
+      const markers: SeriesMarker<Time>[] = signals.map((s) => ({
+        time: s.date as Time,
+        position: s.type === "buy" ? "belowBar" as const : "aboveBar" as const,
         color: s.type === "buy" ? "#22c55e" : "#ef4444",
-        shape: s.type === "buy" ? "arrowUp" : "arrowDown",
+        shape: s.type === "buy" ? "arrowUp" as const : "arrowDown" as const,
         text: s.type === "buy" ? "매수" : "매도",
       }));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      createSeriesMarkers(candleSeries, markers as any);
+      createSeriesMarkers(candleSeries, markers);
     }
 
     // 거래량 히스토그램 (v5 API)
@@ -97,14 +99,12 @@ export function CandlestickChart({ data, height = 420, signals }: CandlestickCha
     chart.priceScale("volume").applyOptions({
       scaleMargins: { top: 0.8, bottom: 0 },
     });
-    volumeSeries.setData(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data.map(({ time, volume, open, close }) => ({
-        time,
-        value: volume,
-        color: close >= open ? "#22c55e40" : "#ef444440",
-      })) as any
-    );
+    const volumeData: HistogramData<Time>[] = data.map(({ time, volume, open, close }) => ({
+      time: time as Time,
+      value: volume,
+      color: close >= open ? "#22c55e40" : "#ef444440",
+    }));
+    volumeSeries.setData(volumeData);
 
     chart.timeScale().fitContent();
 
